@@ -1,53 +1,115 @@
+---
 name: Unit Tests
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
+    branches: ['**']
 
 jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
+      has-code-changes: ${{ steps.filter.outputs.code || 'true' }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v6
+
+      - name: Detect code changes
+        uses: dorny/paths-filter@v3
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!docs/**'
+              - '!.vale.ini'
+              - '!.github/ISSUE_TEMPLATE/**'
+              - '!.github/PULL_REQUEST_TEMPLATE.md'
+
+      - name: Compute matrix
+        id: matrix
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          node_versions=$(yq eval '.node_versions | join(" ")' .github/test-matrix.yml)
+          extra_oses=$(yq eval '.extra_oses_on_release | join(" ")' .github/test-matrix.yml)
+          always_oses=$(yq eval '.extra_oses_always | join(" ")' .github/test-matrix.yml)
+          primary=$(yq eval '.primary_node_version' .github/test-matrix.yml)
+
+          OS_NODE=()
+          for node in $node_versions; do
+            OS_NODE+=("ubuntu-latest:$node")
+          done
+          for os in $always_oses; do
+            OS_NODE+=("$os:$primary")
+          done
+          if [[ "$HEAD_REF" == release-please--* ]]; then
+            for os in $extra_oses; do
+              OS_NODE+=("$os:$primary")
+            done
+          fi
+
+          declare -A seen
+          entries=()
+          for combo in "${OS_NODE[@]}"; do
+            [[ -n "${seen[$combo]:-}" ]] && continue
+            seen[$combo]=1
+            os="${combo%:*}"
+            node="${combo##*:}"
+            entries+=("{\"os\":\"$os\",\"node-version\":\"$node\"}")
+          done
+          joined=$(IFS=,; echo "${entries[*]}")
+          echo "value={\"include\":[$joined]}" >> "$GITHUB_OUTPUT"
+
   unit:
     name: Unit
+    needs: setup
+    if: needs.setup.outputs.has-code-changes == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
-      matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        node-version: ['18.14.0', '22.x']
-        exclude:
-          - os: windows-latest
-            node-version: '22.x'
       fail-fast: false
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
     steps:
-      # Sets an output parameter if this is a release PR
-      - name: Check for release
-        id: release-check
-        # For windows we have to use $env:
-        run: |-
-          echo "IS_RELEASE=true" >> $GITHUB_OUTPUT
-          echo "IS_RELEASE=true" >> $env:GITHUB_OUTPUT
-        if: "${{ startsWith(github.head_ref, 'release-') }}"
       - name: Git checkout
-        uses: actions/checkout@v4
-        if: '${{!steps.release-check.outputs.IS_RELEASE}}'
+        uses: actions/checkout@v6
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
           check-latest: true
-        if: '${{!steps.release-check.outputs.IS_RELEASE}}'
+
+      - name: Install pinned npm version
+        run: npm install -g npm@11.19.1
+
       - name: Install core dependencies
         run: npm ci --no-audit
-        if: '${{!steps.release-check.outputs.IS_RELEASE}}'
-      - name: Linting
-        run: npm run format:ci
-        if: '${{!steps.release-check.outputs.IS_RELEASE}}'
+
+      - name: Build project
+        run: npm run build
+
       - name: Run unit tests
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          retry_on: error
-          command: npm run test:ci:vitest:unit
-        if: '${{!steps.release-check.outputs.IS_RELEASE}}'
+        run: npm run test:unit -- --coverage
+
+  status:
+    name: Unit Tests Status
+    needs: [setup, unit]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify result
+        run: |
+          if [[ "${{ needs.setup.result }}" != "success" ]]; then
+            echo "Setup job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.unit.result }}" == "failure" || "${{ needs.unit.result }}" == "cancelled" ]]; then
+            echo "Unit tests failed"
+            exit 1
+          fi

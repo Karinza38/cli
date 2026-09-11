@@ -1,9 +1,10 @@
 import { OptionValues } from 'commander'
 
-import { chalk, log, logJson, exit } from '../../utils/command-helpers.js'
-import { AVAILABLE_CONTEXTS, translateFromEnvelopeToMongo } from '../../utils/env/index.js'
+import { chalk, log, logJson } from '../../utils/command-helpers.js'
+import { SUPPORTED_CONTEXTS, translateFromEnvelopeToMongo } from '../../utils/env/index.js'
 import { promptOverwriteEnvVariable } from '../../utils/prompts/env-unset-prompts.js'
 import BaseCommand from '../base-command.js'
+import { getSiteInfo } from './utils.js'
 /**
  * Deletes a given key from the env of a site configured with Envelope
  * @returns {Promise<object>}
@@ -43,7 +44,7 @@ const unsetInEnvelope = async ({ api, context, force, key, siteInfo }) => {
         await Promise.all(values.map((value) => api.deleteEnvVarValue({ ...params, id: value.id })))
         // if this was the `all` context, we need to create 3 values in the other contexts
         if (values.length === 1 && values[0].context === 'all') {
-          const newContexts = AVAILABLE_CONTEXTS.filter((ctx) => !context.includes(ctx))
+          const newContexts = SUPPORTED_CONTEXTS.filter((ctx) => !context.includes(ctx))
           const allValue = values[0].value
           await Promise.all(
             newContexts
@@ -73,11 +74,11 @@ export const envUnset = async (key: string, options: OptionValues, command: Base
   const siteId = site.id
 
   if (!siteId) {
-    log('No site id found, please run inside a site folder or `netlify link`')
+    log('No project id found, please run inside a project folder or `netlify link`')
     return false
   }
 
-  const { siteInfo } = cachedConfig
+  const siteInfo = await getSiteInfo(api, siteId, cachedConfig)
 
   const finalEnv = await unsetInEnvelope({ api, context, force, siteInfo, key })
 
@@ -87,6 +88,7 @@ export const envUnset = async (key: string, options: OptionValues, command: Base
     return false
   }
 
-  const contextType = AVAILABLE_CONTEXTS.includes(context || 'all') ? 'context' : 'branch'
+  const contextType = SUPPORTED_CONTEXTS.includes(context || 'all') ? 'context' : 'branch'
   log(`Unset environment variable ${chalk.yellow(key)} in the ${chalk.magenta(context || 'all')} ${contextType}`)
+  log(`Changes will require a redeploy to take effect on any deployed versions of your project.`)
 }

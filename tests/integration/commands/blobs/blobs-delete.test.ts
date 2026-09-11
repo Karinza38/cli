@@ -34,6 +34,7 @@ vi.mock('@netlify/blobs', () => ({
 
 vi.mock('../../../../src/utils/telemetry/report-error.js', () => ({
   reportError: vi.fn(),
+  setCommandForErrorReporting: vi.fn(),
 }))
 
 const routes: Route[] = [
@@ -125,7 +126,8 @@ describe('blobs:delete command', () => {
             await runMockProgram(['', '', 'blobs:delete', storeName, key])
           } catch (error) {
             // We expect the process to exit, so this is fine
-            expect(error.message).toContain('process.exit unexpectedly called')
+            expect(error).toBeInstanceOf(Error)
+            expect((error as Error).message).toContain('process.exit unexpectedly called')
           }
 
           expect(promptSpy).toHaveBeenCalledWith({
@@ -181,7 +183,8 @@ describe('blobs:delete command', () => {
             try {
               await runMockProgram(['', '', 'blobs:delete', storeName, key, '--force'])
             } catch (error) {
-              expect(error.message).toContain(
+              expect(error).toBeInstanceOf(Error)
+              expect((error as Error).message).toContain(
                 `Could not delete blob ${chalk.yellow(key)} from store ${chalk.yellow(storeName)}`,
               )
             }
@@ -223,7 +226,7 @@ describe('blobs:delete command', () => {
       })
 
       test('should not show prompt for CI/CD', async () => {
-        setCI(true)
+        setCI('true')
         await withMockApi(routes, async ({ apiUrl }) => {
           Object.assign(process.env, getEnvironmentVariables({ apiUrl }))
 

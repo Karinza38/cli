@@ -3,8 +3,6 @@ title: Netlify CLI command reference
 description: All Netlify CLI commands
 ---
 
-# Netlify CLI command reference
-
 To get a list of commands, run
 
 ```
@@ -17,9 +15,30 @@ To get a list of available sub-commands, arguments & flags run
 netlify [command] help
 ```
 
+## Running the CLI from an AI agent
+
+Set `NETLIFY_AGENT` to the name of the AI agent or tool running the CLI, such as `claude-code` or `codex`, optionally with
+a version (`my-agent@1.2.0`). Netlify uses it to attribute CLI usage and signups to that agent, and it takes precedence
+over the markers agents set on their own, such as `AI_AGENT`.
+
+Use only a product name and version. Never put a token, session ID, or other sensitive value in it: the value is sent to
+Netlify and can appear in the login URL the CLI prints.
+
 ## Commands
 
 <!-- AUTO-GENERATED-CONTENT:START (GENERATE_COMMANDS_LIST) -->
+### [agents](/commands/agents)
+
+Manage Netlify AI agent tasks
+
+| Subcommand | description  |
+|:--------------------------- |:-----|
+| [`agents:create`](/commands/agents#agentscreate) | Create and run a new agent task on your site  |
+| [`agents:list`](/commands/agents#agentslist) | List agent tasks for the current site  |
+| [`agents:show`](/commands/agents#agentsshow) | Show details of a specific agent task  |
+| [`agents:stop`](/commands/agents#agentsstop) | Stop a running agent task  |
+
+
 ### [api](/commands/api)
 
 Run any Netlify API method
@@ -40,6 +59,14 @@ Manage objects in Netlify Blobs
 
 Build on your local machine
 
+### [claim](/commands/claim)
+
+Claim an anonymously deployed site and link it to your account
+
+### [clone](/commands/clone)
+
+Clone a repository and link it to a Netlify project
+
 ### [completion](/commands/completion)
 
 Generate shell completion script
@@ -49,9 +76,26 @@ Generate shell completion script
 | [`completion:install`](/commands/completion#completioninstall) | Generates completion script for your preferred shell  |
 
 
+### [create](/commands/create)
+
+Create a new Netlify project using an AI agent
+
+### [database](/commands/database)
+
+Provision a production ready Postgres database with a single command
+
+| Subcommand | description  |
+|:--------------------------- |:-----|
+| [`database status`](/commands/database#database-status) | Check the status of the database, including applied and pending migrations  |
+| [`database init`](/commands/database#database-init) | Interactive setup: install the package, scaffold a starter migration, and verify the database  |
+| [`database connect`](/commands/database#database-connect) | Connect to the database  |
+| [`database reset`](/commands/database#database-reset) | Reset the local development database, removing all data and tables  |
+| [`database migrations`](/commands/database#database-migrations) | Manage database migrations  |
+
+
 ### [deploy](/commands/deploy)
 
-Create a new deploy from the contents of a folder
+Deploy your project to Netlify
 
 ### [dev](/commands/dev)
 
@@ -64,14 +108,14 @@ Local dev server
 
 ### [env](/commands/env)
 
-Control environment variables for the current site
+Control environment variables for the current project
 
 | Subcommand | description  |
 |:--------------------------- |:-----|
-| [`env:clone`](/commands/env#envclone) | Clone environment variables from one site to another  |
+| [`env:clone`](/commands/env#envclone) | Clone environment variables from one project to another  |
 | [`env:get`](/commands/env#envget) | Get resolved value of specified environment variable (includes netlify.toml)  |
 | [`env:import`](/commands/env#envimport) | Import and set environment variables from .env file  |
-| [`env:list`](/commands/env#envlist) | Lists resolved environment variables for site (includes netlify.toml)  |
+| [`env:list`](/commands/env#envlist) | Lists resolved environment variables for project (includes netlify.toml)  |
 | [`env:set`](/commands/env#envset) | Set value of environment variable  |
 | [`env:unset`](/commands/env#envunset) | Unset an environment variable which removes it from the UI  |
 
@@ -91,20 +135,11 @@ Manage netlify functions
 
 ### [init](/commands/init)
 
-Configure continuous deployment for a new or existing site. To create a new site without continuous deployment, use `netlify sites:create`
-
-### [integration](/commands/integration)
-
-Manage Netlify Integrations built with the Netlify SDK
-
-| Subcommand | description  |
-|:--------------------------- |:-----|
-| [`integration:deploy`](/commands/integration#integrationdeploy) | Register, build, and deploy a private integration on Netlify  |
-
+Configure continuous deployment for a new or existing project. To create a new project without continuous deployment, use `netlify sites:create`
 
 ### [link](/commands/link)
 
-Link a local repo or project folder to an existing site on Netlify
+Link a local repo or project folder to an existing project on Netlify
 
 ### [login](/commands/login)
 
@@ -112,22 +147,16 @@ Login to your Netlify account
 
 ### [logs](/commands/logs)
 
-Stream logs from your site
-
-| Subcommand | description  |
-|:--------------------------- |:-----|
-| [`logs:deploy`](/commands/logs#logsdeploy) | (Beta) Stream the logs of deploys currently being built to the console  |
-| [`logs:function`](/commands/logs#logsfunction) | (Beta) Stream netlify function logs to the console  |
-
+View logs from your project
 
 ### [open](/commands/open)
 
-Open settings for the site linked to the current folder
+Open settings for the project linked to the current folder
 
 | Subcommand | description  |
 |:--------------------------- |:-----|
-| [`open:admin`](/commands/open#openadmin) | Opens current site admin UI in Netlify  |
-| [`open:site`](/commands/open#opensite) | Opens current site url in browser  |
+| [`open:admin`](/commands/open#openadmin) | Opens current project admin UI in Netlify  |
+| [`open:site`](/commands/open#opensite) | Opens current project url in browser  |
 
 
 ### [recipes](/commands/recipes)
@@ -141,18 +170,18 @@ Create and modify files in a project using pre-defined recipes
 
 ### [serve](/commands/serve)
 
-Build the site for production and serve locally. This does not watch the code for changes, so if you need to rebuild your site then you must exit and run `serve` again.
+Build the project for production and serve locally. This does not watch the code for changes, so if you need to rebuild your project then you must exit and run `serve` again.
 
 ### [sites](/commands/sites)
 
-Handle various site operations
+Handle various project operations
 
 | Subcommand | description  |
 |:--------------------------- |:-----|
-| [`sites:create`](/commands/sites#sitescreate) | Create an empty site (advanced)  |
-| [`sites:create-template`](/commands/sites#sitescreate-template) | (Beta) Create a site from a starter template  |
-| [`sites:delete`](/commands/sites#sitesdelete) | Delete a site  |
-| [`sites:list`](/commands/sites#siteslist) | List all sites you have access to  |
+| [`sites:create`](/commands/sites#sitescreate) | Create an empty project (advanced)  |
+| [`sites:delete`](/commands/sites#sitesdelete) | Delete a project  |
+| [`sites:list`](/commands/sites#siteslist) | List all projects you have access to  |
+| [`sites:search`](/commands/sites#sitessearch) | Search for projects by name  |
 
 
 ### [status](/commands/status)
@@ -161,20 +190,53 @@ Print status information
 
 | Subcommand | description  |
 |:--------------------------- |:-----|
-| [`status:hooks`](/commands/status#statushooks) | Print hook information of the linked site  |
+| [`status:hooks`](/commands/status#statushooks) | Print hook information of the linked project  |
 
 
 ### [switch](/commands/switch)
 
 Switch your active Netlify account
 
+### [teams](/commands/teams)
+
+Handle various team operations
+
+| Subcommand | description  |
+|:--------------------------- |:-----|
+| [`teams:list`](/commands/teams#teamslist) | List all teams you have access to  |
+
+
 ### [unlink](/commands/unlink)
 
-Unlink a local folder from a Netlify site
+Unlink a local folder from a Netlify project
 
 ### [watch](/commands/watch)
 
-Watch for site deploy to finish
+Watch for project deploy to finish
 
 
 <!-- AUTO-GENERATED-CONTENT:END -->
+
+## Agent detection
+
+The CLI reads the `NETLIFY_AGENT` environment variable to learn which AI agent or tool is running it. Agents, MCP servers, and wrappers that invoke the CLI should set it to their name, optionally followed by `@` and a version:
+
+```bash
+NETLIFY_AGENT=claude-code@2.1.0 netlify deploy
+```
+
+Recognized values are `claude`, `codex`, `copilot`, `gemini`, `cursor`, `opencode`, `kiro`, `cline`, `amp`, `warp`, `claudeai`, and `chatgpt`, plus the aliases `claude-code`, `claude-ai`, `github-copilot`, `github-copilot-cli`, `github-copilot-vscode-agent`, `cursor-cli`, `gemini-cli`, `kiro-cli`, and `warp-oz`. Matching ignores case and treats `_` as `-`. Any other value is recorded as `other`. Characters other than letters, digits, `_`, `.`, and `-` are removed, and values are truncated to 64 characters.
+
+The CLI also recognizes markers that agent products set on their own, such as `AI_AGENT`, `CODEX_CI`, and `GEMINI_CLI`. `NETLIFY_AGENT` takes precedence over all of them, even when its value isn't recognized.
+
+### Telemetry
+
+When telemetry is enabled, each CLI telemetry event includes the detected agent:
+
+- `agent`: the recognized name, or `other`
+- `agent_source`: the name of the environment variable that identified the agent
+- `agent_version`: the version, when the agent provides one
+- `agent_markers`: every detected agent name, when markers from more than one agent are present
+- `agent_other_value`: the sanitized value, when `agent` is `other`
+
+No agent fields are sent when no agent is detected. Telemetry isn't sent in CI, or at all after you run `netlify --telemetry-disable`.

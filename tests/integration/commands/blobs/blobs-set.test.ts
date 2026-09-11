@@ -34,6 +34,7 @@ vi.mock('@netlify/blobs', () => ({
 
 vi.mock('../../../../src/utils/telemetry/report-error.js', () => ({
   reportError: vi.fn(),
+  setCommandForErrorReporting: vi.fn(),
 }))
 
 const routes: Route[] = [
@@ -157,7 +158,8 @@ describe('blobs:set command', () => {
             await runMockProgram(['', '', 'blobs:set', storeName, key, newValue])
           } catch (error) {
             // We expect the process to exit, so this is fine
-            expect(error.message).toContain('process.exit unexpectedly called with "0"')
+            expect(error).toBeInstanceOf(Error)
+            expect((error as Error).message).toContain('process.exit unexpectedly called with "0"')
           }
 
           expect(promptSpy).toHaveBeenCalledWith({
@@ -213,7 +215,8 @@ describe('blobs:set command', () => {
           try {
             await runMockProgram(['', '', 'blobs:set', storeName, key, newValue, '--force'])
           } catch (error) {
-            expect(error.message).toContain(
+            expect(error).toBeInstanceOf(Error)
+            expect((error as Error).message).toContain(
               `Could not set blob ${chalk.yellow(key)} in store ${chalk.yellow(storeName)}`,
             )
           }
@@ -256,7 +259,7 @@ describe('blobs:set command', () => {
       })
 
       test('should not show prompt in a ci/cd environment', async () => {
-        setCI(true)
+        setCI('true')
         await withMockApi(routes, async ({ apiUrl }) => {
           Object.assign(process.env, getEnvironmentVariables({ apiUrl }))
 

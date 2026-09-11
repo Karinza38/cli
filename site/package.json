@@ -2,53 +2,31 @@
   "name": "cli-docs-site",
   "version": "1.0.0",
   "description": "Docs site for Netlify CLI",
-  "private": true,
-  "type": "commonjs",
-  "author": "Netlify Inc.",
-  "files": [
-    "/src",
-    "/dist"
-  ],
-  "scripts": {
-    "start": "npm run sync && run-p start:*",
-    "dev:start": "npm run sync && NODE_OPTIONS=--openssl-legacy-provider x0 src",
-    "dev:build": "npm run clean && npm run sync && NODE_OPTIONS=--openssl-legacy-provider x0 build src",
-    "build": "npm run clean && run-s build:*",
-    "postbuild": "cp src/_redirects dist/_redirects",
-    "build:docs": "node scripts/docs.mjs",
-    "build:site": "npm run sync && x0 build src",
-    "start:site": "x0 src",
-    "start:watch": "node ./watch.mjs",
-    "watch": "node ./watch.mjs",
-    "sync": "node ./sync.mjs",
-    "clean": "rm -rf dist"
-  },
   "license": "MIT",
+  "author": "Netlify Inc.",
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:docs-md && npm run build:site",
+    "build:docs-md": "npm run build:docs-md:gen && npm run build:docs-md:copy",
+    "build:docs-md:copy": "./scripts/sync.js",
+    "build:docs-md:gen": "./scripts/docs.js",
+    "build:site": "astro build",
+    "dev": "npm run build:docs-md:copy && astro dev",
+    "preview": "npm run build:docs-md:copy && astro preview",
+    "start": "npm run dev"
+  },
   "dependencies": {
-    "@compositor/x0": "6.0.7",
-    "@rebass/markdown": "1.0.0",
-    "@rebass/mdx": "1.0.0",
-    "algoliasearch": "4.24.0",
-    "lodash.sortby": "4.7.0",
-    "prop-types": "15.8.1",
-    "react": "16.14.0",
-    "react-dom": "16.14.0",
-    "react-helmet": "6.1.0",
-    "react-instantsearch-dom": "6.40.4",
-    "react-router-dom": "4.3.1",
-    "react-emotion": "9.2.12",
-    "rebass": "2.3.4",
-    "styled-components": "3.4.10",
-    "styled-system": "5.1.5"
+    "@astrojs/markdown-remark": "7.2.4",
+    "@astrojs/starlight": "0.41.10",
+    "@bugsnag/js": "8.10.0",
+    "astro": "7.2.9",
+    "markdown-magic": "2.6.1",
+    "sharp": "0.34.5",
+    "strip-ansi": "7.2.0"
   },
   "devDependencies": {
-    "markdown-magic": "2.6.1",
-    "npm-run-all2": "5.0.2",
-    "sane": "5.0.1",
-    "strip-ansi": "7.1.0"
+    "@netlify/functions": "6.0.0",
+    "tsx": "4.23.13"
   },
-  "overrides": {
-    "react": "$react",
-    "react-dom": "$react-dom"
-  }
+  "packageManager": "npm@11.19.1+sha512.cedb312b1b7f92421a02cfb68b4194e88f8346651dacd6acc5364a25ef5309d4a32b19616a1ff8aff865e7280c0fa5c0835a99f5cd93368991e2a80ec9da75d2"
 }

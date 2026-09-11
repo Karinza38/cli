@@ -1,0 +1,10 @@
+{
+  "extends": ["@tsconfig/recommended", "@tsconfig/node22"],
+  "compilerOptions": {
+    "allowJs": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "typeRoots": ["node_modules/@types", "types"]
+  },
+  "exclude": ["**/__fixtures__/**", "dist/", "functions-templates/", "site/"]
+}

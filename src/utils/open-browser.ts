@@ -1,7 +1,6 @@
 import process from 'process'
 
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bett... Remove this comment to see the full error message
-import open from 'better-opn'
+import open from 'open'
 import isDockerContainer from 'is-docker'
 
 import { chalk, log } from './command-helpers.js'
@@ -20,28 +19,30 @@ const unableToOpenBrowserMessage = function ({ message, url }: BrowserUnableMess
 }
 
 type OpenBrowsrProps = {
-  silentBrowserNoneError: boolean
+  silentBrowserNoneError?: boolean
   url: string
 }
 
-const openBrowser = async function ({ silentBrowserNoneError, url }: OpenBrowsrProps) {
+const openBrowser = async function ({ silentBrowserNoneError, url }: OpenBrowsrProps): Promise<boolean> {
   if (isDockerContainer()) {
     unableToOpenBrowserMessage({ url, message: 'Running inside a docker container' })
-    return
+    return false
   }
   if (process.env.BROWSER === 'none') {
     if (!silentBrowserNoneError) {
       unableToOpenBrowserMessage({ url, message: "BROWSER environment variable is set to 'none'" })
     }
-    return
+    return false
   }
 
   try {
     await open(url)
+    return true
   } catch (error) {
     if (error instanceof Error) {
       unableToOpenBrowserMessage({ url, message: error.message })
     }
+    return false
   }
 }
 

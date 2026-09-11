@@ -3,14 +3,20 @@ import { dirname, join } from 'path'
 import process, { version as nodejsVersion } from 'process'
 import { fileURLToPath } from 'url'
 
+import { getGlobalConfigStore } from '@netlify/dev-utils'
 import { isCI } from 'ci-info'
 
 import execa from '../execa.js'
-import getGlobalConfig from '../get-global-config.js'
 
 import { cliVersion } from './utils.js'
 
 const dirPath = dirname(fileURLToPath(import.meta.url))
+
+let currentCommand: string | undefined
+
+export const setCommandForErrorReporting = (command?: string): void => {
+  currentCommand = command
+}
 
 /**
  *
@@ -25,12 +31,17 @@ export const reportError = async function (error, config = {}) {
   if (isCI) {
     return
   }
-
   // convert a NotifiableError to an error class
-  // eslint-disable-next-line unicorn/no-nested-ternary
   const err = error instanceof Error ? error : typeof error === 'string' ? new Error(error) : error
 
-  const globalConfig = await getGlobalConfig()
+  // `@netlify/config` tags intentional user-input errors (malformed netlify.toml,
+  // invalid redirects, etc.) with this shape. See @netlify/config/lib/error.js.
+  // These are not CLI bugs and don't belong in Bugsnag.
+  if (error?.customErrorInfo?.type === 'resolveConfig') {
+    return
+  }
+
+  const globalConfig = await getGlobalConfigStore()
 
   const options = JSON.stringify({
     type: 'error',
@@ -44,8 +55,11 @@ export const reportError = async function (error, config = {}) {
       user: {
         id: globalConfig.get('userId'),
       },
-      // @ts-expect-error TS(2339) FIXME: Property 'metadata' does not exist on type '{}'.
-      metadata: config.metadata,
+      metadata: {
+        // @ts-expect-error TS(2339) FIXME: Property 'metadata' does not exist on type '{}'.
+        ...config.metadata,
+        ...(currentCommand === undefined ? {} : { command: { name: currentCommand } }),
+      },
       osName: `${os.platform()}-${os.arch()}`,
       cliVersion,
       nodejsVersion,

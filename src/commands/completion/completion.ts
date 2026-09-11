@@ -4,29 +4,27 @@ import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import inquirer from 'inquirer'
 
-import { OptionValues } from 'commander'
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'tabt... Remove this comment to see the full error message
-import { install, uninstall } from 'tabtab'
+import type { OptionValues } from 'commander'
+import { install, uninstall } from '@pnpm/tabtab'
 
 import { generateAutocompletion } from '../../lib/completion/index.js'
 import {
-  error,
+  logAndThrowError,
   log,
   chalk,
   checkFileForLine,
   TABTAB_CONFIG_LINE,
   AUTOLOAD_COMPINIT,
 } from '../../utils/command-helpers.js'
-import BaseCommand from '../base-command.js'
+import type BaseCommand from '../base-command.js'
 
 const completer = join(dirname(fileURLToPath(import.meta.url)), '../../lib/completion/script.js')
 
-export const completionGenerate = async (options: OptionValues, command: BaseCommand) => {
+export const completionGenerate = async (_options: OptionValues, command: BaseCommand) => {
   const { parent } = command
 
   if (!parent) {
-    error(`There has been an error generating the completion script.`)
-    return
+    return logAndThrowError(`There has been an error generating the completion script.`)
   }
 
   generateAutocompletion(parent)
@@ -67,7 +65,7 @@ export const completionGenerate = async (options: OptionValues, command: BaseCom
       },
     ])
     if (compinitAdded) {
-      await fs.readFile(zshConfigFilepath, 'utf8', (err, data) => {
+      fs.readFile(zshConfigFilepath, 'utf8', (_err, data) => {
         const updatedZshFile = AUTOLOAD_COMPINIT + '\n' + data
 
         fs.writeFileSync(zshConfigFilepath, updatedZshFile, 'utf8')
@@ -88,10 +86,9 @@ export const completionGenerate = async (options: OptionValues, command: BaseCom
   }
 }
 
-export const completionUninstall = async (options: OptionValues, command: BaseCommand) => {
+export const completionUninstall = async (_options: OptionValues, command: BaseCommand) => {
   if (!command.parent) {
-    error(`There has been an error deleting the completion script.`)
-    return
+    return logAndThrowError(`There has been an error deleting the completion script.`)
   }
   await uninstall({
     name: command.parent.name(),
